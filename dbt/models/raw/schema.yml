@@ -1,0 +1,14 @@
+version: 2
+
+models:
+  - name: raw_weather
+    description: "Raw weather data from S3 storage in JSON format"
+    columns:
+      - name: json_content
+        description: "Raw JSON content containing weather data for cities"
+        tests:
+          - not_null
+      - name: loaded_at
+        description: "Timestamp when the data was loaded"
+        tests:
+          - not_null

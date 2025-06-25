@@ -1,0 +1,39 @@
+version: 2
+
+models:
+  - name: mart_daily_weather_summary
+    description: "Daily weather summary aggregated by city"
+    tests:
+      - unique:
+          column_name: "city_name || '_' || weather_date"
+    columns:
+      - name: city_name
+        description: "Name of the city"
+        tests:
+          - not_null
+      - name: weather_date
+        description: "Date of the weather data"
+        tests:
+          - not_null
+      - name: min_temperature
+        description: "Minimum temperature for the day in Celsius"
+      - name: max_temperature
+        description: "Maximum temperature for the day in Celsius"
+      - name: avg_temperature
+        description: "Average temperature for the day in Celsius"
+      - name: min_humidity
+        description: "Minimum humidity percentage for the day"
+      - name: max_humidity
+        description: "Maximum humidity percentage for the day"
+      - name: avg_humidity
+        description: "Average humidity percentage for the day"
+      - name: avg_wind_speed
+        description: "Average wind speed in meters per second"
+      - name: max_wind_speed
+        description: "Maximum wind speed in meters per second"
+      - name: total_precipitation
+        description: "Total precipitation for the day in millimeters"
+      - name: temperature_category
+        description: "Categorical classification of the day's temperature (Hot, Warm, Mild, Cool, Cold)"
+      - name: measurement_count
+        description: "Number of weather measurements included in this daily summary"

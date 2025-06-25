@@ -1,0 +1,46 @@
+version: 2
+
+sources:
+  - name: clickhouse
+    database: weather
+
+models:
+  - name: stg_weather
+    description: "Staging model that extracts structured data from raw JSON weather data"
+    columns:
+      - name: city_name
+        description: "Name of the city"
+        tests:
+          - not_null
+      - name: latitude
+        description: "Latitude coordinate of the location"
+        tests:
+          - not_null
+      - name: longitude
+        description: "Longitude coordinate of the location"
+        tests:
+          - not_null
+      - name: weather_datetime
+        description: "Full timestamp of the weather data"
+        tests:
+          - not_null
+      - name: weather_date
+        description: "Date component of the weather timestamp"
+        tests:
+          - not_null
+      - name: weather_hour
+        description: "Hour of day (0-23) extracted from the timestamp"
+      - name: temperature_celsius
+        description: "Temperature in Celsius"
+      - name: humidity_percent
+        description: "Humidity percentage"
+      - name: wind_speed_ms
+        description: "Wind speed in meters per second"
+      - name: wind_direction_degrees
+        description: "Wind direction in degrees"
+      - name: pressure_hpa
+        description: "Atmospheric pressure in hectopascals"
+      - name: precipitation_mm
+        description: "Precipitation in millimeters"
+      - name: loaded_at
+        description: "Timestamp when the data was loaded"

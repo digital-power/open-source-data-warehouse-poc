@@ -1,0 +1,76 @@
+# ClickHouse configuration for single-node with backup replicas
+
+# Cluster topology - single node with replicas for backup
+shards: 1                # Single shard (no point in multiple shards on 1 node)
+replicaCount: 2          # 2 replicas for backup (both on same node)
+
+# Authentication using secrets
+auth:
+  username: default
+  existingSecret: "clickhouse-secrets"
+  existingSecretKey: "clickhouse-password"
+
+# Pod distribution - DISABLED for single node
+podAntiAffinityPreset: ""           # Must be empty for single node
+distributeReplicasByZone: false     # Disabled for single node
+
+# ClickHouse resources - conservative for single node
+resources:
+  requests:
+    cpu: 500m            # Half a CPU core per pod
+    memory: 1Gi          # 1GB per pod
+  limits:
+    cpu: 1500m           # Max 1.5 cores per pod
+    memory: 3Gi          # Max 3GB per pod
+
+# Storage configuration - smaller volumes for single node testing
+persistence:
+  enabled: true
+  storageClass: "sbs-default"
+  size: 10Gi             # 10GB per replica (20GB total)
+
+# Keeper configuration - single keeper only
+keeper:
+  enabled: true
+  replicaCount: 1        # MUST be 1 for single node (no quorum possible)
+
+  # Pod distribution - DISABLED for single node
+  podAntiAffinityPreset: ""
+
+  # Keeper resources - minimal for single node
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+
+  # Keeper storage
+  persistence:
+    enabled: true
+    storageClass: "sbs-default"
+    size: 5Gi
+
+# Enable metrics for monitoring
+metrics:
+  enabled: true
+  podAnnotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8001"
+
+# PVC cleanup when scaling down
+persistentVolumeClaimRetentionPolicy:
+  enabled: true
+  whenScaled: Delete
+  whenDeleted: Retain
+
+# Pod disruption budget - adjusted for single node
+pdb:
+  create: true
+  minAvailable: 1        # Keep 1 pod during updates (allows rolling updates)
+
+# Network policy
+networkPolicy:
+  enabled: true
+  allowExternal: true

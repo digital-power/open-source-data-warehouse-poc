@@ -1,0 +1,15 @@
+.DS_Store
+.env
+.venv
+.idea
+.claude
+
+# dbt
+dbt/target
+.user.yml
+
+# Terraform
+.terraform/
+.terraform.lock.hcl
+terraform.tfstate
+terraform.tfstate.backup
