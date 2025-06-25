@@ -303,10 +303,12 @@ dbt run
 
 1. General improvements
 - [ ] Separate infrastructure, k8s manifests, ingestion and transformation code into different repositories.
-- [ ] Re-evaluate secret management strategy, possibly using an external secrets manager.
+- [ ] Re-evaluate secret management strategy, possibly using an external secrets manager with [helm secrets plugin](https://github.com/jkroepke/helm-secrets).  
 - [ ] Add more comprehensive documentation for each component.
 
 1. Airflow improvements
+- [ ] Check production guidelines - [Airflow Production Guidelines](https://airflow.apache.org/docs/helm-chart/stable/production-guide.html).
+- [ ] Use managed Postgres as Airflow metastore.
 - [ ] Sync dags from Git repo instead of building them into the Docker image.
 - [ ] Store logs in Scaleway Object Storage.
 - [ ] Add Postgres as metadata database for Airflow.
@@ -315,7 +317,7 @@ dbt run
 1. ClickHouse improvements
 - [ ] Add ClickHouse 3rd party interface for better user experience - [options](https://clickhouse.com/docs/interfaces/third-party)
 
-1. Extensions
+1. Additional components
 - [ ] Add ArgoCD for continuous deployment and monitoring of deployments.
 - [ ] Add unity catalog for data lineage and governance.
 
