@@ -112,7 +112,7 @@ cd terraform
 terraform init
 ```
 
-1. Run Terraform:
+2. Run Terraform:
 
 Make sure you supply the required variables in a `terraform.tfvars` file or through `variables.tf`
 
@@ -120,7 +120,7 @@ Make sure you supply the required variables in a `terraform.tfvars` file or thro
 terraform apply
 ```
 
-1. Get the Kubernetes cluster ID from the Terraform output:
+3. Get the Kubernetes cluster ID from the Terraform output:
 
 ```bash
 terraform output -raw cluster_id
@@ -128,13 +128,13 @@ terraform output -raw cluster_id
 
 ### Configure kubectl for Scaleway
 
-1. Get the kubeconfig file for the Scaleway cluster:
+4. Get the kubeconfig file for the Scaleway cluster:
 
 ```bash
 scw k8s kubeconfig get cluster-id="<insert_cluster_id>" > ~/.kube/scaleway-config
 ```
 
-1. Configure kubectl to use the Scaleway config:
+5. Configure kubectl to use the Scaleway config:
 
 ```bash
 export KUBECONFIG=~/.kube/scaleway-config
@@ -143,13 +143,13 @@ export KUBECONFIG=~/.kube/scaleway-config
 IMPORTANT: always point the `KUBECONFIG` env var to the Scaleway kubeconfig file when using `kubectl` commands.
 Otherwise, you will be working with the default kubeconfig file, which may not point to the Scaleway cluster.
 
-1. Verify connection to the cluster:
+6. Verify connection to the cluster:
 
 ```bash
 kubectl get nodes
 ```
 
-1. Create secrets - see [README.md](k8s/secrets/README.md) for details:
+7. Create secrets - see [README.md](k8s/secrets/README.md) for details:
 
 ```bash
 cd ../k8s/secrets
@@ -158,19 +158,19 @@ cd ../k8s/secrets
 
 ### Deploy ClickHouse
 
-1. Install ClickHouse using Helm:
+8. Install ClickHouse using Helm:
 
 ```bash
 helm install clickhouse bitnami/clickhouse -n clickhouse -f k8s/clickhouse/values.yaml 
 ```
 
-1. Wait for the ClickHouse deployment to be ready:
+9. Wait for the ClickHouse deployment to be ready:
 
 ```bash
 kubectl get pods -n clickhouse
 ```
 
-1. Forward the ClickHouse port to access it locally - programmatically or via CLI:
+10. Forward the ClickHouse port to access it locally - programmatically or via CLI:
 
 ```bash
 kubectl port-forward svc/clickhouse 9000:9000 -n clickhouse
@@ -179,7 +179,8 @@ kubectl port-forward svc/clickhouse 8123:8123 -n clickhouse
 
 Via the browser, you can access the ClickHouse web UI at `http://localhost:8123/play`.
 
-#### Setup Airflow dbt user
+#### Airflow User
+
 1. Install Clickhouse CLI - [DOCS](https://clickhouse.com/docs/install)
 
 For macOS, you can use Homebrew:
@@ -188,34 +189,35 @@ For macOS, you can use Homebrew:
 brew install --cask clickhouse
 ```
 
-1. Connect to ClickHouse:
+2. Connect to ClickHouse:
 
 ```bash
 clickhouse-client --host localhost --port 9000 --user default --password
 ```
 
-1. Enter the password when prompted
+3. Enter the password when prompted
 
 
-1. Create the `dbt` user and grant permissions:
+4. Create the `airflow_dbt` user and grant permissions:
 
 ```sql
 CREATE USER IF NOT EXISTS airflow_dbt IDENTIFIED WITH plaintext_password BY 'password123';
 ```
 
+#### Grant Permissions
 1. Create the `weather` database:
 
 ```sql
 CREATE DATABASE IF NOT EXISTS weather;
 ```
 
-1.  Grant permissions to the `airflow_dbt` user on the `weather` database:
+2. Grant permissions to the `airflow_dbt` user on the `weather` database:
 
 ```sql
 GRANT ALL ON weather.* TO airflow_dbt;
 ```
 
-1. Grant S3 permissions to the `airflow_dbt` user:
+3. Grant S3 permissions to the `airflow_dbt` user:
 
 ```sql
 GRANT S3 ON *.* TO airflow_dbt;
@@ -253,7 +255,7 @@ kubectl create namespace airflow
 helm repo add apache-airflow https://airflow.apache.org
 
 # Deploy Airflow using your custom image
-helm install airflow apache-airflow/airflow \                                                                  py 3.11  kube admin@tf-cluster 09:50:57
+helm install airflow apache-airflow/airflow \
   --namespace airflow \
   --values k8s/airflow/values.yaml \
   --version 1.17.0
