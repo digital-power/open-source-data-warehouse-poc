@@ -29,50 +29,49 @@ resource "scaleway_iam_policy" "weather_bucket_policy" {
 }
 
 # Create API key for the application and store keys in secrets
-resource "scaleway_iam_api_key" "weather_api_key" {
+resource "scaleway_iam_api_key" "weather_data_key" {
   application_id = scaleway_iam_application.weather_app.id
-  description    = "API key for weather data bucket access"
+  description    = "Access key for weather data bucket access"
 }
 
-resource "scaleway_secret" "weather_data_api_access_key" {
-  name        = "weather-data-api-access-key"
-  description = "API access key for weather data bucket"
+resource "scaleway_secret" "weather_data_key" {
+  name        = "weather-data-access-key"
+  description = "Access key for weather data bucket"
 }
 
 resource "scaleway_secret_version" "weather_data_api_access_key_version" {
-  secret_id = scaleway_secret.weather_data_api_access_key.id
-  data      = scaleway_iam_api_key.weather_api_key.access_key
+  secret_id = scaleway_secret.weather_data_key.id
+  data      = scaleway_iam_api_key.weather_data_key.access_key
 }
 
-resource "scaleway_secret" "weather_data_api_secret_key" {
-  name        = "weather-data-api-secret-key"
-  description = "API secret key for weather data bucket"
+resource "scaleway_secret" "weather_data_secret_key" {
+  name        = "weather-data-secret-key"
+  description = "Secret key for weather data bucket"
 }
 
 resource "scaleway_secret_version" "weather_data_api_secret_key_version" {
-  secret_id = scaleway_secret.weather_data_api_secret_key.id
-  data      = scaleway_iam_api_key.weather_api_key.secret_key
+  secret_id = scaleway_secret.weather_data_secret_key.id
+  data      = scaleway_iam_api_key.weather_data_key.secret_key
 }
-
 
 # Output the bucket name
 output "weather_data_bucket_name" {
   value = scaleway_object_bucket.weather_data.name
 }
 
+# Output the IAM application ID
+output "weather_data_app_id" {
+  value = scaleway_iam_api_key.weather_data_key.application_id
+}
+
 # Output the API access key for the application
-output "weather_data_api_access_key" {
+output "weather_data_access_key" {
   # sensitive = true
-  value = scaleway_iam_api_key.weather_api_key.access_key
+  value = scaleway_iam_api_key.weather_data_key.access_key
 }
 
 # Output the API secret key for the application
 output "weather_data_api_secret_key" {
   sensitive = true
-  value     = scaleway_iam_api_key.weather_api_key.secret_key
-}
-
-# Output the IAM application ID
-output "weather_data_app_id" {
-  value = scaleway_iam_api_key.weather_api_key.application_id
+  value     = scaleway_iam_api_key.weather_data_key.secret_key
 }

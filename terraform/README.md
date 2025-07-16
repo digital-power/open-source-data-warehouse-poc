@@ -53,9 +53,21 @@ The Terraform configuration provisions the following Scaleway services:
 After successful deployment, Terraform will output:
 
 - `cluster_id`: Kubernetes cluster identifier
-- `registry_url`: Container registry URL for pushing images
+- `registry_endpoint`: Container registry endpoint for pushing images
+- `registry_namespace_id`: Namespace in the container registry
+- `weather_data_app_id`: Application ID for the weather data service
+- `weather_data_access_key`: Access key for the weather data storage bucket
+- `weather_data_secret_key`: Secret key for the weather data storage bucket
 - `bucket_name`: Object storage bucket name
 - Other relevant infrastructure details
+
+## Set secret environment variables
+Based on the outputs, please set the following environment variables in your `.env` file.
+
+- `S3_ACCESS_KEY`: The access key for the weather data storage bucket
+- `S3_SECRET_KEY`: The secret key for the weather data storage bucket (can also be found in generated secret manager)
+
+> Note that it's important to set these variables as these are used by dbt to authenticate with the storage bucket when loading in the raw data.
 
 ## Cleanup
 

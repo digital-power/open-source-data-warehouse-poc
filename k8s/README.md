@@ -6,9 +6,7 @@ This directory contains Kubernetes configuration files for deploying the open so
 1. **ClickHouse** - Database deployment configuration for the analytics warehouse.
 2. **Airflow** - Workflow orchestration platform deployment configuration.
 3. **Traefik** - Reverse proxy and load balancer for service ingress.
-
-### Secrets
-Contains secret management configuration and scripts.
+4. **Secrets** - Management of sensitive information like database credentials and API keys.
 
 ## Prerequisites
 
@@ -50,6 +48,8 @@ See [README.md](secrets/README.md) for details:
 sh ./k8s/secrets/create-secrets.sh <path-to-your-env-file> <environment>
 ```
 
+> Be sure to update the `.env` file with your actual API keys and credentials before running the script.
+
 ### 3. Deploy ClickHouse
 
 Install ClickHouse using Helm:
@@ -66,26 +66,25 @@ kubectl get pods -n clickhouse
 
 #### Access ClickHouse
 
-**Option 1: Using Traefik (For Web UI)**
+**Using Traefik**
 
-If you have Traefik deployed (see [Deploy Traefik](#5-deploy-traefik-optional) section):
+If you have Traefik deployed (see [Deploy Traefik](#5-deploy-traefik) section):
 
 1. Port forward Traefik service:
 ```bash
 kubectl port-forward -n default svc/traefik 8123:80
 ```
 
-2. Access ClickHouse Web UI at `http://clickhouse.local:9000/play`.
+2. Access ClickHouse Web UI at http://clickhouse.local:8123/play.
 
-**Option 2: Port Forwarding (For CLI Access)**
+**Port Forwarding for CLI Access**
 
 1. Port forward the ClickHouse service to your local machine:
 ```bash
-# Port forward ClickHouse native protocol (for CLI)
 kubectl port-forward svc/clickhouse 9000:9000 -n clickhouse
 ```
 
-2. Check the ClickHouse service status by visiting the web UI at `http://localhost:9000`
+2. Check the ClickHouse service status by visiting the web UI at http://localhost:9000
 
 This should return below message:
 ```text
@@ -108,12 +107,6 @@ docker push <your-registry-url>/airflow-with-dags:latest
 
 Note: Replace `<your-registry-url>` with your actual registry URL, e.g., `rg.fr-par.scw.cloud/weather-etl-dev`. Run `terraform output`.
 
-#### Create Namespace for Airflow
-
-```bash
-kubectl create namespace airflow
-```
-
 #### Deploy Airflow with Helm
 
 ```bash
@@ -131,32 +124,17 @@ helm install airflow apache-airflow/airflow \
 
 **Using Traefik**
 
-If you have Traefik deployed (see [Deploy Traefik](#5-deploy-traefik-optional) section):
+If you have Traefik deployed (see [Deploy Traefik](#5-deploy-traefik) section):
 
 - Port forward Traefik service:
 ```bash
 kubectl port-forward -n default svc/traefik 8123:80
 ```
 
-- Access Airflow UI at `http://airflow.local:8123`.
-
-
-#### Troubleshooting
-
-Check Pod Status:
-```bash
-kubectl get pods -n airflow
-```
-
-View Pod Logs:
-```bash
-kubectl logs -f <pod-name> -n airflow
-```
-
-View events in the namespace:
-```bash
-kubectl get events -n airflow
-```
+- Access Airflow UI at http://airflow.local:8123. 
+- Default credentials are:
+  - Username: `airflow`
+  - Password: `airflow`
 
 ### 5. Deploy Traefik
 
@@ -177,21 +155,19 @@ helm repo update
 helm install traefik traefik/traefik -f k8s/traefik/values.yaml
 ```
 
-3. Apply the IngressRoutes for your services (only after ClickHouse and Airflow are deployed):
+3. Apply the IngressRoutes for your services:
 ```bash
 kubectl apply -f k8s/traefik/ingressroutes.yaml
 ```
 
-#### Access Services
-
-**With Port Forwarding (Recommended for Development)**
-
-1. Forward Traefik service to local port:
+4. Forward Traefik service to local port:
 ```bash
 kubectl port-forward -n default svc/traefik 8123:80
 ```
 
-2. Update /etc/hosts
+#### Access Services
+
+1. Update /etc/hosts
 
 Add these entries to your `/etc/hosts` file:
 ```
@@ -200,10 +176,10 @@ Add these entries to your `/etc/hosts` file:
 127.0.0.1 clickhouse.local
 ```
 
-3. Access web UIs from your browser:
-- Traefik Dashboard: `http://traefik.local:8123/dashboard/`
-- Airflow: `http://airflow.local:8123`
-- ClickHouse: `http://clickhouse.local:8123/play`
+2. Access web UIs from your browser:
+- Traefik Dashboard: http://traefik.local:8123/dashboard/
+- Airflow: http://airflow.local:8123
+- ClickHouse: http://clickhouse.local:8123/play
 
 ## Setup ClickHouse for Airflow
 
@@ -255,3 +231,26 @@ GRANT ALL ON weather.* TO airflow_dbt;
 GRANT S3 ON *.* TO airflow_dbt;
 ```
 
+> If dbt raises an auth error in Airflow, repeat the steps above to ensure the user and permissions are correctly set.
+
+#### Troubleshooting
+
+Check Pod Status:
+```bash
+kubectl get pods -n <namespace>
+```
+
+View Pod Logs:
+```bash
+kubectl logs -f <pod-name> -n <namespace>
+```
+
+View events:
+```bash
+kubectl get events -n <namespace>
+```
+
+Enter pod shell for debugging:
+```bash
+kubectl exec -it <pod-name> -n <namespace> -- /bin/sh
+```

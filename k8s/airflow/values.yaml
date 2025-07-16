@@ -58,8 +58,6 @@ webserver:
     requests:
       cpu: 250m
       memory: 512Mi
-  service:
-    type: LoadBalancer
 
 # Triggerer configuration
 triggerer:

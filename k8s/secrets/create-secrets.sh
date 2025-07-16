@@ -40,9 +40,6 @@ kubectl create secret generic airflow-secrets \
   --from-literal=admin-password="$ADMIN_PASSWORD" \
   --dry-run=client -o yaml | kubectl apply -f -
 
-# Note: airflow-postgresql and airflow-metadata secrets will be created by Helm
-# These are commented out to avoid conflicts with Helm management
-
 # External API secrets from .env file
 kubectl create secret generic external-api-secrets \
   --namespace=airflow \

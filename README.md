@@ -1,4 +1,4 @@
-# Open source data warehouse 
+# Open source data warehouse
 
 This project is intended to implement a data pipeline as POC on an open source data warehouse stack. 
 It serves as and alternative to the popular Big Tech Cloud Data Warehouses like Databricks, Snowflake, or BigQuery.
@@ -120,25 +120,36 @@ cd dbt
 dbt run
 ```
 
+## Airflow DAG run
+After deploying the Airflow DAG, you can trigger the data pipeline manually or wait for the scheduled runs. 
+The DAG will execute the following tasks:
+- `collect_weather_data`: Collect weather data from the public API and store it in Scaleway Object Storage
+- `transform_weather_data`: Load the raw data from S3 into ClickHouse and apply transformations using dbt models
+
+![images/airflow.png](images/airflow.png)
+
+
+
 ## Production Guidelines
 The project is a proof of concept and not intended for production use. However, if you plan to build from here, consider the following improvements:
 
-Generic improvements
+### Generic improvements
 - Separate infrastructure, k8s manifests, ingestion and transformation code into different repositories.
 - Re-evaluate secret management strategy, possibly using an external secrets manager with [helm secrets plugin](https://github.com/jkroepke/helm-secrets).
-- Use artifact registry for ingestion Python code .
+- Use artifact registry for ingestion Python code.
+- Enable TLS/SSL and network security policies
 
-Airflow improvements
+### Airflow improvements
 - Check production guidelines - [Airflow Production Guidelines](https://airflow.apache.org/docs/helm-chart/stable/production-guide.html).
 - Use managed Postgres as Airflow metastore.
 - Sync dags from Git repo instead of building them into the Docker image.
 - Store logs in Scaleway Object Storage.
 - Add Redis for caching and task queue.
 
-ClickHouse improvements
+### ClickHouse improvements
 - Adjust computation resources based on workload requirements.
 - Add ClickHouse 3rd party interface for better user experience - [options](https://clickhouse.com/docs/interfaces/third-party)
 
-Additional components
+### Additional components
 - Add ArgoCD for continuous deployment and monitoring of deployments.
 - Add open-source catalog such as unity or LakeKeeper for governance and discovery.
