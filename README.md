@@ -16,6 +16,8 @@ It uses the following Scaleway services:
 - Object Storage for data storage
 - Secrets Manager for managing sensitive information
 
+> [IMPORTANT]  This project is a proof of concept and not intended for production use. It is meant to demonstrate the capabilities of an open source data warehouse stack.
+
 ## Architecture Overview
 
 ![Architecture Overview](images/architecture.png)
@@ -63,15 +65,13 @@ The project uses dbt (data build tool) to transform raw weather data into struct
 #### Mart Layer
 - **mart_daily_weather_summary**: Provides aggregated daily weather statistics by city. This model calculates min/max/avg temperatures, wind speeds, and precipitation totals to support analytics use cases.
 
-The models are optimized for ClickHouse, using appropriate materialization strategies and engine configurations for performance.
-
 ## Project Structure
 
 - `dags/`: Airflow DAGs for weather data collection
 - `dbt/`: Data transformation models using dbt
-- `k8s/`: Kubernetes configuration for deployment
+- `k8s/`: Kubernetes configuration for deployment - see [K8s README](k8s/README.md)
 - `src/`: Python source code for the data pipeline
-- `terraform/`: Infrastructure as code for Scaleway setup
+- `terraform/`: Infrastructure as code for Scaleway setup - see [Terraform README](terraform/README.md)
 
 ## Local Development
 
@@ -91,9 +91,13 @@ cd open-source-data-warehouse-poc
 ```
 
 ## Deployment 
-For deployment of the open source warehouse, we will use Scaleway's infrastructure with Kubernetes and Terraform.
 
-## Scaleway
+For deployment of the open source warehouse, we use Scaleway's infrastructure with Kubernetes and Terraform.
+
+### Quick Start
+
+1. **Infrastructure**: Deploy cloud resources with Terraform - see [Terraform README](terraform/README.md)
+2. **Kubernetes**: Deploy applications on K8s cluster - see [K8s README](k8s/README.md)
 
 ### Prerequisites
 
@@ -102,191 +106,6 @@ For deployment of the open source warehouse, we will use Scaleway's infrastructu
 - kubectl installed
 - Helm v3.x installed
 - Docker installed
-
-### Infrastructure Setup
-
-1. Initialize Terraform:
-
-```bash
-cd terraform
-terraform init
-```
-
-2. Run Terraform:
-
-Make sure you supply the required variables in a `terraform.tfvars` file or through `variables.tf`
-
-```bash
-terraform apply
-```
-
-3. Get the Kubernetes cluster ID from the Terraform output:
-
-```bash
-terraform output -raw cluster_id
-```
-
-### Configure kubectl for Scaleway
-
-4. Get the kubeconfig file for the Scaleway cluster:
-
-```bash
-scw k8s kubeconfig get cluster-id="<insert_cluster_id>" > ~/.kube/scaleway-config
-```
-
-5. Configure kubectl to use the Scaleway config:
-
-```bash
-export KUBECONFIG=~/.kube/scaleway-config
-```
-
-IMPORTANT: always point the `KUBECONFIG` env var to the Scaleway kubeconfig file when using `kubectl` commands.
-Otherwise, you will be working with the default kubeconfig file, which may not point to the Scaleway cluster.
-
-6. Verify connection to the cluster:
-
-```bash
-kubectl get nodes
-```
-
-7. Create secrets - see [README.md](k8s/secrets/README.md) for details:
-
-```bash
-cd ../k8s/secrets
-./create-secrets.sh <path-to-your-env-file> <environment>
-```
-
-### Deploy ClickHouse
-
-8. Install ClickHouse using Helm:
-
-```bash
-helm install clickhouse bitnami/clickhouse -n clickhouse -f k8s/clickhouse/values.yaml 
-```
-
-9. Wait for the ClickHouse deployment to be ready:
-
-```bash
-kubectl get pods -n clickhouse
-```
-
-10. Forward the ClickHouse port to access it locally - programmatically or via CLI:
-
-```bash
-kubectl port-forward svc/clickhouse 9000:9000 -n clickhouse
-kubectl port-forward svc/clickhouse 8123:8123 -n clickhouse
-```
-
-Via the browser, you can access the ClickHouse web UI at `http://localhost:8123/play`.
-
-#### Airflow User
-
-1. Install Clickhouse CLI - [DOCS](https://clickhouse.com/docs/install)
-
-For macOS, you can use Homebrew:
-
-```bash
-brew install --cask clickhouse
-```
-
-2. Connect to ClickHouse:
-
-```bash
-clickhouse-client --host localhost --port 9000 --user default --password
-```
-
-3. Enter the password when prompted
-
-
-4. Create the `airflow_dbt` user and grant permissions:
-
-```sql
-CREATE USER IF NOT EXISTS airflow_dbt IDENTIFIED WITH plaintext_password BY 'password123';
-```
-
-#### Grant Permissions
-1. Create the `weather` database:
-
-```sql
-CREATE DATABASE IF NOT EXISTS weather;
-```
-
-2. Grant permissions to the `airflow_dbt` user on the `weather` database:
-
-```sql
-GRANT ALL ON weather.* TO airflow_dbt;
-```
-
-3. Grant S3 permissions to the `airflow_dbt` user:
-
-```sql
-GRANT S3 ON *.* TO airflow_dbt;
-```
-
-### Deploy Airflow
-
-#### 1. Build and Push the Airflow Docker Image
-
-```bash
-# Build the Docker image
-docker build -t airflow-with-dags:latest .  
-# Or use buildx for multi-platform support
-docker buildx build --platform linux/amd64 -t rg.fr-par.scw.cloud/weather-etl-dev/airflow-with-dags:latest . 
-
-# Tag the image for your registry
-docker tag airflow-with-dags:latest <your-registry-url>/airflow-with-dags:latest
-
-# Push the image to your registry
-docker push <your-registry-url>/airflow-with-dags:latest
-```
-
-Note: Replace `<your-registry-url>` with your actual registry URL, e.g., `rg.fr-par.scw.cloud/weather-etl-dev`. Run `terraform output`.
-
-#### 3. Create Namespace for Airflow
-
-```bash
-kubectl create namespace airflow
-```
-
-#### 4. Deploy Airflow with Helm
-
-```bash
-# Add the Airflow Helm repository
-helm repo add apache-airflow https://airflow.apache.org
-
-# Deploy Airflow using your custom image
-helm install airflow apache-airflow/airflow \
-  --namespace airflow \
-  --values k8s/airflow/values.yaml \
-  --version 1.17.0
-```
-
-#### 5. Access Airflow UI
-
-**Using Port Forwarding**
-
-```bash
-kubectl port-forward svc/airflow-api-server 8080:8080 -n airflow
-```
-
-Access the Airflow UI at http://localhost:8080 (default credentials: admin/admin)
-
-#### Troubleshooting
-
-Check Pod Status:
-```bash
-kubectl get pods -n airflow
-```
-
-View Pod Logs:
-```bash
-kubectl logs -f <pod-name> -n airflow
-```
-
-View events in the namespace:
-```bash
-kubectl get events -n airflow
-```
 
 ## Running the Pipeline
 
@@ -301,27 +120,25 @@ cd dbt
 dbt run
 ```
 
-## To do's
+## Production Guidelines
+The project is a proof of concept and not intended for production use. However, if you plan to build from here, consider the following improvements:
 
-1. General improvements
-- [ ] Separate infrastructure, k8s manifests, ingestion and transformation code into different repositories.
-- [ ] Re-evaluate secret management strategy, possibly using an external secrets manager with [helm secrets plugin](https://github.com/jkroepke/helm-secrets).  
-- [ ] Add more comprehensive documentation for each component.
+Generic improvements
+- Separate infrastructure, k8s manifests, ingestion and transformation code into different repositories.
+- Re-evaluate secret management strategy, possibly using an external secrets manager with [helm secrets plugin](https://github.com/jkroepke/helm-secrets).
+- Use artifact registry for ingestion Python code .
 
-1. Airflow improvements
-- [ ] Check production guidelines - [Airflow Production Guidelines](https://airflow.apache.org/docs/helm-chart/stable/production-guide.html).
-- [ ] Use managed Postgres as Airflow metastore.
-- [ ] Sync dags from Git repo instead of building them into the Docker image.
-- [ ] Store logs in Scaleway Object Storage.
-- [ ] Add Postgres as metadata database for Airflow.
-- [ ] Add Redis for caching and task queue.
+Airflow improvements
+- Check production guidelines - [Airflow Production Guidelines](https://airflow.apache.org/docs/helm-chart/stable/production-guide.html).
+- Use managed Postgres as Airflow metastore.
+- Sync dags from Git repo instead of building them into the Docker image.
+- Store logs in Scaleway Object Storage.
+- Add Redis for caching and task queue.
 
-1. ClickHouse improvements
-- [ ] Add ClickHouse 3rd party interface for better user experience - [options](https://clickhouse.com/docs/interfaces/third-party)
+ClickHouse improvements
+- Adjust computation resources based on workload requirements.
+- Add ClickHouse 3rd party interface for better user experience - [options](https://clickhouse.com/docs/interfaces/third-party)
 
-1. Additional components
-- [ ] Add ArgoCD for continuous deployment and monitoring of deployments.
-- [ ] Add unity catalog for data lineage and governance.
-
-1. Networking
-- [ ] Add Ingress or Load Balancer for external access to Airflow and ClickHouse.
+Additional components
+- Add ArgoCD for continuous deployment and monitoring of deployments.
+- Add open-source catalog such as unity or LakeKeeper for governance and discovery.

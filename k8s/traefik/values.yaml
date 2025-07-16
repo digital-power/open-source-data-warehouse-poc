@@ -1,0 +1,12 @@
+# values.yaml
+ingressRoute:
+  dashboard:
+    enabled: true
+    matchRule: Host(`traefik.local`)
+    entryPoints:
+      - web
+providers:
+  kubernetesGateway:
+    enabled: true
+gateway:
+  namespacePolicy: All

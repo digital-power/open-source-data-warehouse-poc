@@ -1,8 +1,8 @@
 # ClickHouse configuration for single-node with backup replicas
 
 # Cluster topology - single node with replicas for backup
-shards: 1                # Single shard (no point in multiple shards on 1 node)
-replicaCount: 2          # 2 replicas for backup (both on same node)
+shards: 1
+replicaCount: 2
 
 # Authentication using secrets
 auth:
@@ -11,28 +11,28 @@ auth:
   existingSecretKey: "clickhouse-password"
 
 # Pod distribution - DISABLED for single node
-podAntiAffinityPreset: ""           # Must be empty for single node
-distributeReplicasByZone: false     # Disabled for single node
+podAntiAffinityPreset: ""
+distributeReplicasByZone: false
 
 # ClickHouse resources - conservative for single node
 resources:
   requests:
-    cpu: 500m            # Half a CPU core per pod
-    memory: 1Gi          # 1GB per pod
+    cpu: 500m
+    memory: 1Gi
   limits:
-    cpu: 1500m           # Max 1.5 cores per pod
-    memory: 3Gi          # Max 3GB per pod
+    cpu: 1500m
+    memory: 3Gi
 
 # Storage configuration - smaller volumes for single node testing
 persistence:
   enabled: true
   storageClass: "sbs-default"
-  size: 10Gi             # 10GB per replica (20GB total)
+  size: 10Gi
 
 # Keeper configuration - single keeper only
 keeper:
   enabled: true
-  replicaCount: 1        # MUST be 1 for single node (no quorum possible)
+  replicaCount: 1
 
   # Pod distribution - DISABLED for single node
   podAntiAffinityPreset: ""
@@ -68,7 +68,7 @@ persistentVolumeClaimRetentionPolicy:
 # Pod disruption budget - adjusted for single node
 pdb:
   create: true
-  minAvailable: 1        # Keep 1 pod during updates (allows rolling updates)
+  minAvailable: 1 # Keep 1 pod during updates (allows rolling updates)
 
 # Network policy
 networkPolicy:
